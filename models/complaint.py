@@ -113,6 +113,24 @@ def update_complaint_status(complaint_id, new_status):
     return _serialize_complaint(result) if result else None
 
 
+def qa_approve_complaint(complaint_id, category, priority):
+    """
+    Approve/correct a complaint from QA dashboard.
+    Sets confidence to 1.0 to remove it from review queue.
+    """
+    query = """
+        UPDATE complaints
+        SET category = %s, priority = %s, confidence_score = 1.0, updated_at = NOW()
+        WHERE id = %s
+        RETURNING 
+            id, complaint_text, channel, status, category, priority,
+            confidence_score, resolution_text, sla_deadline, sla_breached,
+            assigned_agent_id, created_at, updated_at
+    """
+    result = execute_query_one(query, (category, priority, complaint_id))
+    return _serialize_complaint(result) if result else None
+
+
 def _serialize_complaint(record):
     """Convert a complaint record to a JSON-serializable dict."""
     if not record:

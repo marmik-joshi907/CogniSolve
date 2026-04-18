@@ -160,7 +160,7 @@ export default function ComplaintLog() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-surface">
+    <div className="flex min-h-screen w-full bg-surface">
       {/* SideNavBar */}
       <nav className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-slate-50 dark:bg-slate-900 py-6 px-4 gap-2">
         <div className="mb-8 px-4">

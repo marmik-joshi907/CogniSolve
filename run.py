@@ -13,6 +13,7 @@ from db.connection import init_pool, execute_script, close_pool
 from routes.complaints import complaints_bp
 from routes.dashboard import dashboard_bp
 from routes.export import export_bp
+from routes.sarvam import sarvam_bp
 
 
 def create_app():
@@ -25,6 +26,7 @@ def create_app():
     app.register_blueprint(complaints_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(sarvam_bp)
 
     # Health check endpoint
     @app.route("/api/health", methods=["GET"])

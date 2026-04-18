@@ -208,7 +208,6 @@ def train():
         C=1.0,
         max_iter=1000,
         solver='lbfgs',
-        multi_class='multinomial',
         random_state=42,
         n_jobs=-1,
     )
@@ -228,7 +227,6 @@ def train():
         C=1.0,
         max_iter=1000,
         solver='lbfgs',
-        multi_class='multinomial',
         random_state=42,
         n_jobs=-1,
     )
@@ -288,7 +286,7 @@ def train():
     print(f"  Category accuracy: {cat_accuracy:.4f}")
     print(f"  Priority accuracy: {pri_accuracy:.4f}")
     print(f"  Model type: Logistic Regression (multinomial)")
-    print(f"  Features: TF-IDF(5000) → SVD(100) + keywords(6) + meta(5) = {X.shape[1]}D")
+    print(f"  Features: TF-IDF(5000) -> SVD(100) + keywords(6) + meta(5) = {X.shape[1]}D")
     print("=" * 60)
 
 

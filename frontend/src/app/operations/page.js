@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 export default function Operations() {
   const [stats, setStats] = useState(null);
   const [complaints, setComplaints] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -80,7 +83,7 @@ export default function Operations() {
     }
   };
   return (
-    <div className="flex h-screen w-full bg-surface">
+    <div className="flex min-h-screen w-full bg-surface">
       
 {/*  TopNavBar  */}
 <nav className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_12px_40px_rgba(25,28,30,0.06)] flex justify-between items-center px-8 h-16 w-full">
@@ -95,16 +98,89 @@ export default function Operations() {
 <input className="w-full bg-surface-container-low text-on-surface rounded-DEFAULT py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder-secondary border-none transition-all" placeholder="Search insights..." type="text"/>
 </div>
 </div>
-<div className="flex items-center gap-6">
-<button className="text-indigo-900 dark:text-indigo-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center relative">
+<div className="flex items-center gap-6 relative">
+{/* Notifications */}
+<div className="relative">
+<button onClick={() => { setShowNotifications(!showNotifications); setShowSettings(false); setShowProfile(false); }} className="text-indigo-900 dark:text-indigo-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center relative">
 <span className="material-symbols-outlined">notifications</span>
 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
 </button>
-<button className="text-indigo-900 dark:text-indigo-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center">
+{showNotifications && (
+  <div className="absolute top-full mt-2 right-0 w-80 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 overflow-hidden z-[100]">
+    <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface flex justify-between items-center">
+      <h3 className="font-headline font-bold text-sm">Notifications</h3>
+      <span className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full">2 New</span>
+    </div>
+    <div className="max-h-64 overflow-y-auto">
+      <div className="p-3 border-b border-outline-variant/5 hover:bg-surface-container-low transition-colors cursor-pointer bg-primary/5">
+        <p className="text-sm font-bold text-on-surface mb-0.5">SLA Breach Warning</p>
+        <p className="text-xs text-secondary line-clamp-2 mb-1">Case CGN-6 is 30 minutes away from SLA breach.</p>
+        <p className="text-[10px] text-secondary">Just now</p>
+      </div>
+      <div className="p-3 border-b border-outline-variant/5 hover:bg-surface-container-low transition-colors cursor-pointer">
+        <p className="text-sm font-bold text-on-surface mb-0.5">System Update</p>
+        <p className="text-xs text-secondary line-clamp-2 mb-1">Weekly reports have successfully been generated.</p>
+        <p className="text-[10px] text-secondary">2 hours ago</p>
+      </div>
+    </div>
+    <div className="p-2 border-t border-outline-variant/10 bg-surface text-center">
+      <button className="text-xs font-bold text-primary hover:text-primary-container transition-colors">Mark all as read</button>
+    </div>
+  </div>
+)}
+</div>
+
+{/* Settings */}
+<div className="relative">
+<button onClick={() => { setShowSettings(!showSettings); setShowNotifications(false); setShowProfile(false); }} className="text-indigo-900 dark:text-indigo-100 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all duration-200 active:opacity-80 p-2 rounded-full flex items-center justify-center">
 <span className="material-symbols-outlined">settings</span>
 </button>
-<div className="h-8 w-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-sm overflow-hidden cursor-pointer shadow-sm">
+{showSettings && (
+  <div className="absolute top-full mt-2 right-0 w-64 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 overflow-hidden z-[100]">
+    <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface">
+      <h3 className="font-headline font-bold text-sm">Quick Settings</h3>
+    </div>
+    <div className="flex flex-col py-2">
+      <button className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
+        <span className="material-symbols-outlined text-[18px] text-secondary">tune</span>
+        Preferences
+      </button>
+      <button className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
+        <span className="material-symbols-outlined text-[18px] text-secondary">palette</span>
+        Appearance
+      </button>
+      <button className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
+        <span className="material-symbols-outlined text-[18px] text-secondary">lock</span>
+        Security
+      </button>
+    </div>
+  </div>
+)}
+</div>
+
+{/* Profile */}
+<div className="relative">
+<div onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); setShowSettings(false); }} className="h-8 w-8 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-sm overflow-hidden cursor-pointer shadow-sm ring-2 ring-transparent hover:ring-primary/20 transition-all">
 <img alt="User profile" className="w-full h-full object-cover" data-alt="close up professional headshot of a confident woman in business attire with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASycN07uN8UJ1FQHS8SQFUPy2kgJ7X8J2Sj2QxWhMwRwZ90jGwCXSLNwjnwmQO39jLzmL1mGVz0CdGCSR5kRhmp5YLlmCEyh-MI26hGNZLJ8ehBKlEVngB8D3WbJrQxKrT_CIziGMI3wBvna4PxkrME79UPHqZQEudmpzEZE3vNkcQr6u71-cuhp2Jq51V0WWeRsf3YM_VaHmzMCyVMhTcEFYN9sVhlMwYVWx9TROUknD-LzGdqTAVLham9D-kj5xXEJ97TtSjO8VZ"/>
+</div>
+{showProfile && (
+  <div className="absolute top-full mt-2 right-0 w-56 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/20 overflow-hidden z-[100]">
+    <div className="px-4 py-3 border-b border-outline-variant/10 bg-surface flex flex-col items-center pt-5 pb-4">
+      <div className="h-14 w-14 rounded-full overflow-hidden mb-3 ring-4 ring-surface-container-low">
+        <img alt="User profile" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASycN07uN8UJ1FQHS8SQFUPy2kgJ7X8J2Sj2QxWhMwRwZ90jGwCXSLNwjnwmQO39jLzmL1mGVz0CdGCSR5kRhmp5YLlmCEyh-MI26hGNZLJ8ehBKlEVngB8D3WbJrQxKrT_CIziGMI3wBvna4PxkrME79UPHqZQEudmpzEZE3vNkcQr6u71-cuhp2Jq51V0WWeRsf3YM_VaHmzMCyVMhTcEFYN9sVhlMwYVWx9TROUknD-LzGdqTAVLham9D-kj5xXEJ97TtSjO8VZ"/>
+      </div>
+      <h3 className="font-headline font-bold text-sm text-center">Jane Doe</h3>
+      <p className="text-xs text-secondary text-center">Operations Manager</p>
+      <span className="mt-2 text-[10px] uppercase font-bold text-[#006d3a] bg-[#006d3a]/10 px-2 py-0.5 rounded-full">Active</span>
+    </div>
+    <div className="flex flex-col py-2">
+      <button className="px-4 py-2 text-left text-sm hover:bg-surface-container-low transition-colors text-error font-medium flex items-center gap-2">
+        <span className="material-symbols-outlined text-[18px]">logout</span>
+        Sign Out
+      </button>
+    </div>
+  </div>
+)}
 </div>
 </div>
 <div className="bg-slate-100 dark:bg-slate-800 h-px w-full absolute bottom-0 opacity-10"></div>
@@ -178,23 +254,38 @@ export default function Operations() {
 <div className="flex flex-wrap items-center gap-3">
 {/*  Filters  */}
 <div className="flex bg-surface-container-lowest rounded-DEFAULT shadow-[0_4px_12px_rgba(25,28,30,0.03)] p-1">
-<button className="px-3 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low rounded-DEFAULT flex items-center gap-2 transition-colors">
-<span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                        Last 7 Days
-                        <span className="material-symbols-outlined text-[16px] text-secondary">expand_more</span>
-</button>
+<div className="relative flex items-center">
+<span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">calendar_today</span>
+<select className="pl-9 pr-8 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low bg-transparent rounded-DEFAULT border-none focus:ring-0 appearance-none outline-none cursor-pointer">
+<option>Last 7 Days</option>
+<option>Last 30 Days</option>
+<option>This Quarter</option>
+<option>This Year</option>
+</select>
+<span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">expand_more</span>
+</div>
 <div className="w-px bg-surface-variant mx-1 my-1"></div>
-<button className="px-3 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low rounded-DEFAULT flex items-center gap-2 transition-colors">
-<span className="material-symbols-outlined text-[16px]">category</span>
-                        All Categories
-                        <span className="material-symbols-outlined text-[16px] text-secondary">expand_more</span>
-</button>
+<div className="relative flex items-center">
+<span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">category</span>
+<select className="pl-9 pr-8 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low bg-transparent rounded-DEFAULT border-none focus:ring-0 appearance-none outline-none cursor-pointer">
+<option>All Categories</option>
+<option>Packaging</option>
+<option>Product</option>
+<option>Trade</option>
+</select>
+<span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">expand_more</span>
+</div>
 <div className="w-px bg-surface-variant mx-1 my-1"></div>
-<button className="px-3 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low rounded-DEFAULT flex items-center gap-2 transition-colors">
-<span className="material-symbols-outlined text-[16px]">flag</span>
-                        All Priorities
-                        <span className="material-symbols-outlined text-[16px] text-secondary">expand_more</span>
-</button>
+<div className="relative flex items-center">
+<span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">flag</span>
+<select className="pl-9 pr-8 py-1.5 text-sm font-label text-on-surface hover:bg-surface-container-low bg-transparent rounded-DEFAULT border-none focus:ring-0 appearance-none outline-none cursor-pointer">
+<option>All Priorities</option>
+<option>High</option>
+<option>Medium</option>
+<option>Low</option>
+</select>
+<span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-secondary text-[16px] pointer-events-none">expand_more</span>
+</div>
 </div>
 {/*  Export Actions  */}
 <div className="flex gap-2 ml-auto md:ml-4">

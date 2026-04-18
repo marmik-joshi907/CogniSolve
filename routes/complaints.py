@@ -12,6 +12,7 @@ from models.complaint import (
     get_all_complaints,
     get_complaint_by_id,
     update_complaint_status,
+    qa_approve_complaint,
 )
 from models.sla import create_sla_event
 from services.classifier import classify_complaint
@@ -286,6 +287,56 @@ def patch_complaint_status(complaint_id):
         return jsonify({
             "success": True,
             "message": f"Complaint status updated to '{new_status}'",
+            "data": updated,
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@complaints_bp.route("/api/complaints/<int:complaint_id>/qa", methods=["PATCH"])
+def patch_complaint_qa(complaint_id):
+    """
+    QA Approval endpoint. Updates category, priority, and sets confidence_score to 1.0.
+    
+    Request Body:
+        {
+            "category": "Trade",
+            "priority": "high"
+        }
+    """
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({"error": "Request body is required"}), 400
+
+        category = data.get("category", "").strip()
+        priority = data.get("priority", "").strip()
+
+        # Check if complaint exists
+        existing = get_complaint_by_id(complaint_id)
+        if not existing:
+            return jsonify({"error": f"Complaint with id {complaint_id} not found"}), 404
+
+        # Update via QA
+        updated = qa_approve_complaint(complaint_id, category, priority)
+
+        # Record SLA event
+        create_sla_event(
+            complaint_id=complaint_id,
+            event_type="qa_approved",
+            event_data={
+                "previous_category": existing["category"],
+                "new_category": category,
+                "previous_priority": existing["priority"],
+                "new_priority": priority,
+            },
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Complaint QA approved successfully",
             "data": updated,
         }), 200
 
