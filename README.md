@@ -1,36 +1,274 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CogniSol — AI Complaint Classification & Resolution System
 
-## Getting Started
+> **Phase 1: Backend Foundation with Mock AI**
 
-First, run the development server:
+Production-ready complaint management backend for a wellness company. Complaints arrive via call, email, or web portal and are automatically classified, prioritized, and tracked against SLA deadlines.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Architecture
+
+```
+┌─────────────┐     ┌───────────────┐     ┌──────────────┐
+│  Channels   │────▸│  Flask API    │────▸│  PostgreSQL  │
+│ call/email/ │     │  + Mock AI    │     │  (4 tables)  │
+│    web      │     └───────────────┘     └──────────────┘
+└─────────────┘            │
+                           ▼
+                    ┌───────────────┐
+                    │  Redis (SLA)  │  ← Phase 2
+                    └───────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Project Structure
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```
+cognisol/
+├── .env                     # Environment variables
+├── requirements.txt         # Python dependencies
+├── run.py                   # Flask entry point
+├── config/
+│   └── settings.py          # Config loader
+├── db/
+│   ├── connection.py        # PostgreSQL connection pool
+│   └── schema.sql           # Database DDL (auto-run on startup)
+├── models/
+│   ├── complaint.py         # Complaint CRUD
+│   ├── agent.py             # Agent CRUD
+│   └── sla.py               # SLA event tracking
+├── services/
+│   └── mock_classifier.py   # Mock AI (random classification)
+└── routes/
+    ├── complaints.py        # /api/complaints/* endpoints
+    └── dashboard.py         # /api/dashboard/* endpoints
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Database Schema
 
-To learn more about Next.js, take a look at the following resources:
+| Table | Purpose |
+|---|---|
+| `classification_labels` | Lookup: Product, Packaging, Trade |
+| `agents` | CSE / QA / Ops / Admin users |
+| `complaints` | Core complaint records with classification + SLA |
+| `sla_events` | Lifecycle event log per complaint |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Setup
 
-## Deploy on Vercel
+### Prerequisites
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Python 3.10+
+- PostgreSQL 14+ (running on localhost:5432)
+- Redis (optional for Phase 1)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Install & Run
+
+```bash
+# 1. Create and activate virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Linux/Mac
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Create the database
+psql -U postgres -c "CREATE DATABASE cognisol;"
+
+# 4. Configure environment (edit .env if needed)
+#    Default: localhost:5432, user=postgres, password=postgres
+
+# 5. Start the server (auto-creates tables on first run)
+python run.py
+```
+
+Server starts at `http://localhost:5000`
+
+---
+
+## API Reference
+
+### Health Check
+
+```
+GET /api/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "service": "CogniSol Complaint Classification System",
+  "version": "1.0.0-phase1"
+}
+```
+
+---
+
+### Submit Complaint
+
+```
+POST /api/complaints/submit
+Content-Type: application/json
+
+{
+  "text": "The product packaging was damaged during delivery",
+  "channel": "email"
+}
+```
+
+Response (201):
+```json
+{
+  "success": true,
+  "message": "Complaint submitted and classified successfully",
+  "data": {
+    "id": 1,
+    "complaint_text": "The product packaging was damaged during delivery",
+    "channel": "email",
+    "status": "open",
+    "category": "Packaging",
+    "priority": "high",
+    "confidence_score": 0.87,
+    "sla_deadline": "2026-04-18T19:05:00",
+    "sla_breached": false,
+    "resolution_text": null,
+    "assigned_agent_id": null,
+    "created_at": "2026-04-18T15:05:00",
+    "updated_at": "2026-04-18T15:05:00"
+  }
+}
+```
+
+**Channels**: `call`, `email`, `web`
+
+---
+
+### List Complaints
+
+```
+GET /api/complaints
+GET /api/complaints?category=Product
+GET /api/complaints?priority=high&status=open
+GET /api/complaints?channel=email
+```
+
+**Filters** (all optional, combinable):
+| Param | Values |
+|---|---|
+| `category` | `Product`, `Packaging`, `Trade` |
+| `priority` | `high`, `medium`, `low` |
+| `status` | `open`, `in_progress`, `resolved`, `closed` |
+| `channel` | `call`, `email`, `web` |
+
+Response (200):
+```json
+{
+  "success": true,
+  "count": 5,
+  "data": [ ... ]
+}
+```
+
+---
+
+### Update Complaint Status
+
+```
+PATCH /api/complaints/1/status
+Content-Type: application/json
+
+{
+  "status": "in_progress"
+}
+```
+
+**Valid statuses**: `open`, `in_progress`, `resolved`, `closed`
+
+Response (200):
+```json
+{
+  "success": true,
+  "message": "Complaint status updated to 'in_progress'",
+  "data": { ... }
+}
+```
+
+---
+
+### Dashboard Stats
+
+```
+GET /api/dashboard/stats
+```
+
+Response (200):
+```json
+{
+  "success": true,
+  "data": {
+    "total_complaints": 15,
+    "by_category": { "Product": 6, "Packaging": 5, "Trade": 4 },
+    "by_priority": { "high": 3, "medium": 7, "low": 5 },
+    "by_status": { "open": 10, "in_progress": 3, "resolved": 2 },
+    "by_channel": { "call": 4, "email": 6, "web": 5 },
+    "sla_breached": 1
+  }
+}
+```
+
+---
+
+## Quick Test (curl)
+
+```bash
+# Submit a complaint
+curl -X POST http://localhost:5000/api/complaints/submit \
+  -H "Content-Type: application/json" \
+  -d "{\"text\": \"Product arrived broken\", \"channel\": \"web\"}"
+
+# List all complaints
+curl http://localhost:5000/api/complaints
+
+# Filter by priority
+curl "http://localhost:5000/api/complaints?priority=high"
+
+# Update status
+curl -X PATCH http://localhost:5000/api/complaints/1/status \
+  -H "Content-Type: application/json" \
+  -d "{\"status\": \"in_progress\"}"
+
+# Dashboard stats
+curl http://localhost:5000/api/dashboard/stats
+```
+
+---
+
+## What's Built (Phase 1)
+
+- [x] PostgreSQL schema (4 tables with indexes & seed data)
+- [x] Database connection pool (psycopg2)
+- [x] Mock AI classifier (random category/priority/confidence)
+- [x] POST /api/complaints/submit — classify + store
+- [x] GET /api/complaints — list with filters
+- [x] PATCH /api/complaints/:id/status — update status
+- [x] GET /api/dashboard/stats — aggregated counts
+- [x] SLA deadline calculation based on priority
+- [x] SLA event lifecycle logging
+- [x] Auto schema migration on startup
+- [x] Environment-based configuration
+
+## What's Next
+
+| Phase | Feature | Tech |
+|---|---|---|
+| **Phase 2** | Real ML classification | TF-IDF + SVD + MiniLM + XGBoost |
+| **Phase 3** | LLM resolution generation | Ollama (llama3) |
+| **Phase 4** | Email ingestion | IMAP polling (imaplib) |
+| **Phase 5** | Call transcription | Sarvam STT |
+| **Phase 6** | SLA tracking + alerts | Redis |
+| **Phase 7** | Frontend dashboards | React (Stich) |
+| **Phase 8** | PDF reports | ReportLab + Pandas |
