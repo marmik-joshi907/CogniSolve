@@ -92,7 +92,7 @@ def _init_database():
     except Exception as e:
         print(f"[CogniSol] ERROR: Failed to initialize database: {e}")
         print("[CogniSol] Make sure PostgreSQL is running and .env is configured correctly.")
-        sys.exit(1)
+        # Removed sys.exit(1) to prevent crash in Render
 
 
 def _init_ml_models():
@@ -120,13 +120,19 @@ def _init_ml_models():
         print("[CogniSol] Resolution engine: TEMPLATE")
 
 
+# ✅ REQUIRED for Gunicorn
+app = create_app()
+
+
 if __name__ == "__main__":
-    app = create_app()
-    print(f"[CogniSol] Starting server on {Config.APP_HOST}:{Config.APP_PORT}")
+    port = int(os.environ.get("PORT", Config.APP_PORT))
+
+    print(f"[CogniSol] Starting server on 0.0.0.0:{port}")
     print(f"[CogniSol] Debug mode: {Config.APP_DEBUG}")
-    print(f"[CogniSol] API Base URL: http://localhost:{Config.APP_PORT}/api")
+    print(f"[CogniSol] API Base URL: http://localhost:{port}/api")
+
     app.run(
-        host=Config.APP_HOST,
-        port=Config.APP_PORT,
+        host="0.0.0.0",
+        port=port,
         debug=Config.APP_DEBUG,
     )
