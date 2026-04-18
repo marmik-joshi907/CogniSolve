@@ -22,7 +22,11 @@ export async function POST(request) {
     const languageCode = formData.get("language_code") || "unknown";
     backendFormData.append("language_code", languageCode);
 
-    const res = await fetch("http://127.0.0.1:5000/api/sarvam/transcribe", {
+    const apiUrl = process.env.NODE_ENV === 'production' 
+        ? "https://cognisolve-api.onrender.com/api/sarvam/transcribe" 
+        : "http://127.0.0.1:5000/api/sarvam/transcribe";
+
+    const res = await fetch(apiUrl, {
       method: "POST",
       body: backendFormData,
     });
