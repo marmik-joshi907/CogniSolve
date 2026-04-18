@@ -44,6 +44,18 @@ const SlaTimer = ({ deadline, initialBreached }) => {
 };
 
 export default function ActionCenter() {
+  const [userName, setUserName] = useState("Jane Doe");
+  const [userRole, setUserRole] = useState("Admin / Operations Manager");
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('cognisolve_username');
+      const storedRole = localStorage.getItem('cognisolve_role');
+      if (storedUser) setUserName(storedUser);
+      if (storedRole) setUserRole(storedRole);
+    }
+  }, []);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
   const [complaints, setComplaints] = useState([]);
   const [source, setSource] = useState("web");
   const [rawText, setRawText] = useState("");
@@ -242,10 +254,7 @@ export default function ActionCenter() {
           <p className="font-body text-xs text-secondary mt-1 uppercase tracking-wider font-semibold">Analytical Authority</p>
         </div>
         
-        <button className="mb-6 w-full py-3 px-4 rounded-md bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold shadow-md hover:shadow-lg transition-all text-sm flex items-center justify-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          New Analysis
-        </button>
+        
 
         <div className="flex-1 flex flex-col gap-1">
           <a className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-sm rounded-md font-bold font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => e.preventDefault()}>
@@ -260,7 +269,7 @@ export default function ActionCenter() {
             <span className="material-symbols-outlined text-[20px]">settings_suggest</span>
             Operations
           </a>
-          <a className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => handleNav(e, 'Analytics')}>
+          <a className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="/analytics">
             <span className="material-symbols-outlined text-[20px]">insights</span>
             Analytics
           </a>
@@ -271,11 +280,11 @@ export default function ActionCenter() {
         </div>
 
         <div className="mt-auto flex flex-col gap-1 border-t border-slate-200 dark:border-slate-800 pt-4">
-          <a className="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => handleNav(e, 'Help Center')}>
+          <a className="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => { e.preventDefault(); setShowHelp(true); }}>
             <span className="material-symbols-outlined text-[18px]">help_outline</span>
             Help Center
           </a>
-          <a className="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => handleNav(e, 'Account')}>
+          <a className="flex items-center gap-3 px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors" href="#" onClick={(e) => { e.preventDefault(); setShowAccount(true); }}>
             <span className="material-symbols-outlined text-[18px]">person</span>
             Account
           </a>
@@ -706,6 +715,78 @@ export default function ActionCenter() {
 
           </div>
         </div>
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHelp(false)}></div>
+          <div className="relative bg-surface w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 border-b border-outline-variant/15 pb-4">
+              <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">support_agent</span>
+                Help Center
+              </h3>
+              <button 
+                onClick={() => setShowHelp(false)}
+                className="p-1.5 hover:bg-surface-container rounded-full text-secondary transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-sm font-body text-secondary leading-relaxed">
+                Welcome to the CogniSolve Support Portal. Our AI-driven resolution system is designed to streamline your workflows.
+              </p>
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+                <h4 className="font-bold text-sm text-primary mb-1">Immediate Assistance</h4>
+                <p className="text-xs text-secondary mb-3">Priority support is available 24/7 for critical SLA breaches.</p>
+                <button className="w-full py-2.5 bg-primary text-on-primary font-bold text-sm flex items-center justify-center gap-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
+                  <span className="material-symbols-outlined text-[18px]">call</span>
+                  Call 1-800-COGNISOLVE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Account Modal */}
+      {showAccount && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAccount(false)}></div>
+          <div className="relative bg-surface w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-gradient-to-br from-indigo-900 to-primary p-6 relative">
+              <button 
+                onClick={() => setShowAccount(false)}
+                className="absolute top-3 right-3 p-1 hover:bg-white/20 rounded-full text-white transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl font-bold tracking-wider mb-2 ring-4 ring-white/10 backdrop-blur-md">
+                {userName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase()}
+              </div>
+              <h3 className="text-xl font-bold font-headline text-white tracking-tight">{userName}</h3>
+              <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">{userRole}</p>
+            </div>
+            
+            <div className="p-2 flex flex-col">
+              <button onClick={() => alert("Settings management initialized...")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface transition-colors">
+                <span className="material-symbols-outlined text-secondary text-[20px]">manage_accounts</span>
+                Manage Settings
+              </button>
+              <button onClick={() => alert("Privacy settings are managed by your administrator.")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface border-b border-surface-container-high transition-colors">
+                <span className="material-symbols-outlined text-secondary text-[20px]">security</span>
+                Security & Privacy
+              </button>
+              <button onClick={() => { if(typeof window !== "undefined") { localStorage.removeItem("cognisolve_username"); localStorage.removeItem("cognisolve_role"); window.location.href = "/"; } }} className="flex items-center gap-3 px-4 py-3 mt-1 hover:bg-error/10 rounded-xl text-left text-sm font-bold text-error transition-colors">
+                <span className="material-symbols-outlined text-[20px]">logout</span>
+                Sign Out Securely
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </main>
 
       {/* Waveform animation keyframes */}

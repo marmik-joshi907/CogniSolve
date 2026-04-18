@@ -2,11 +2,7 @@
 // This properly handles multipart/form-data file uploads
 // and forwards them to the Flask backend
 
-export const config = {
-  api: {
-    bodyParser: false, // Disable Next.js body parser for file uploads
-  },
-};
+
 
 export async function POST(request) {
   try {

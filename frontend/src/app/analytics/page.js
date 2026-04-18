@@ -51,7 +51,7 @@ const SlaTimer = ({ deadline, initialBreached }) => {
   );
 };
 
-export default function ComplaintLog() {
+export default function AnalyticsDashboard() {
   const [userName, setUserName] = useState("Jane Doe");
   const [userRole, setUserRole] = useState("Admin / Operations Manager");
   useEffect(() => {
@@ -213,15 +213,6 @@ export default function ComplaintLog() {
             Operations
           </a>
           <a
-            className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors"
-            href="/operations"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              insights
-            </span>
-            Analytics
-          </a>
-          <a
             className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 shadow-sm rounded-md font-bold font-['Inter'] text-sm tracking-wide uppercase transition-colors"
             href="#"
             onClick={(e) => e.preventDefault()}
@@ -230,6 +221,15 @@ export default function ComplaintLog() {
               className="material-symbols-outlined text-[20px]"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
+              insights
+            </span>
+            Analytics
+          </a>
+          <a
+            className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-indigo-900 dark:hover:text-indigo-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md font-medium font-['Inter'] text-sm tracking-wide uppercase transition-colors"
+            href="/complaint-log"
+          >
+            <span className="material-symbols-outlined text-[20px]">
               history_edu
             </span>
             Complaint Log
@@ -401,226 +401,104 @@ export default function ComplaintLog() {
             </div>
           </div>
 
-          {/* Complaint Table */}
-          <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/15 overflow-hidden">
-            <div className="px-6 py-4 border-b border-surface-container flex justify-between items-center">
-              <h3 className="font-headline font-bold text-lg text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[22px]">
-                  list_alt
-                </span>
-                All Complaints
-              </h3>
-              <span className="text-xs font-label uppercase text-secondary tracking-wider">
-                {filtered.length} of {complaints.length} records
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-surface/50 border-b border-surface-container-high/50">
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      ID
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Complaint
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Channel
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Category
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Priority
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Status
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Confidence
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold">
-                      Date
-                    </th>
-                    <th className="px-5 py-3.5 font-label text-[11px] uppercase tracking-widest text-secondary font-semibold text-right">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="font-body text-sm divide-y divide-surface-container-high/30">
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="9"
-                        className="px-6 py-12 text-center text-secondary"
-                      >
-                        <span className="material-symbols-outlined text-4xl text-secondary/40 mb-2 block">
-                          search_off
-                        </span>
-                        No complaints match your filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((comp) => (
-                      <tr
-                        key={comp.id}
-                        className="hover:bg-surface-container-low/50 transition-colors cursor-pointer"
-                        onClick={() => setSelectedComplaint(comp)}
-                      >
-                        <td className="px-5 py-3.5 font-mono font-medium text-primary text-xs">
-                          CGN-{comp.id}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <p className="font-medium text-on-surface truncate max-w-[250px]" title={comp.complaint_text}>
-                            {comp.complaint_text}
-                          </p>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span className="text-[10px] uppercase font-bold text-secondary bg-surface px-1.5 py-0.5 rounded-sm">
-                            {comp.channel}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-secondary capitalize text-xs">
-                          {comp.category}
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span
-                            className={`${priorityColor(comp.priority)} text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm`}
-                          >
-                            {comp.priority}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          <span
-                            className={`${statusColor(comp.status)} text-xs font-bold flex items-center gap-1 w-fit`}
-                          >
-                            <span className="material-symbols-outlined text-[14px]">
-                              {statusIcon(comp.status)}
-                            </span>
-                            {comp.status.replace("_", " ")}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5">
-                          {comp.confidence_score ? (
-                            <div className="flex items-center gap-2">
-                              <div className="w-12 bg-surface-container-high h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${comp.confidence_score >= 0.8 ? "bg-[#006d3a]" : comp.confidence_score >= 0.6 ? "bg-[#f59e0b]" : "bg-error"}`}
-                                  style={{ width: `${comp.confidence_score * 100}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs text-secondary">
-                                {(comp.confidence_score * 100).toFixed(0)}%
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-secondary">N/A</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3.5 text-xs text-secondary">
-                          {comp.created_at
-                            ? new Date(comp.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            : "—"}
-                        </td>
-                        <td className="px-5 py-3.5 text-right">
-                          <button
-                            className="text-primary hover:bg-primary/5 p-1.5 rounded transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedComplaint(comp);
-                            }}
-                            title="View Details"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">
-                              visibility
-                            </span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-4 border-t border-surface-container-high/50 bg-surface/30 flex justify-between items-center text-xs text-secondary font-label">
-              <span>
-                Showing {filtered.length} of {complaints.length} complaints
-              </span>
-            </div>
-          </div>
-        </div>
-
-      {/* Help Modal */}
-      {showHelp && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowHelp(false)}></div>
-          <div className="relative bg-surface w-full max-w-md rounded-2xl shadow-2xl p-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-4 border-b border-outline-variant/15 pb-4">
-              <h3 className="text-xl font-bold font-headline text-on-surface flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary">support_agent</span>
-                Help Center
-              </h3>
-              <button 
-                onClick={() => setShowHelp(false)}
-                className="p-1.5 hover:bg-surface-container rounded-full text-secondary transition-colors"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="space-y-4">
-              <p className="text-sm font-body text-secondary leading-relaxed">
-                Welcome to the CogniSolve Support Portal. Our AI-driven resolution system is designed to streamline your workflows.
-              </p>
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-                <h4 className="font-bold text-sm text-primary mb-1">Immediate Assistance</h4>
-                <p className="text-xs text-secondary mb-3">Priority support is available 24/7 for critical SLA breaches.</p>
-                <button className="w-full py-2.5 bg-primary text-on-primary font-bold text-sm flex items-center justify-center gap-2 rounded-lg shadow-sm hover:opacity-90 transition-opacity">
-                  <span className="material-symbols-outlined text-[18px]">call</span>
-                  Call 1-800-COGNISOLVE
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Account Modal */}
-      {showAccount && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowAccount(false)}></div>
-          <div className="relative bg-surface w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="bg-gradient-to-br from-indigo-900 to-primary p-6 relative">
-              <button 
-                onClick={() => setShowAccount(false)}
-                className="absolute top-3 right-3 p-1 hover:bg-white/20 rounded-full text-white transition-colors"
-              >
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-2xl font-bold tracking-wider mb-2 ring-4 ring-white/10 backdrop-blur-md">
-                {userName.split(" ").map(n => n[0]).join("").substring(0,2).toUpperCase()}
-              </div>
-              <h3 className="text-xl font-bold font-headline text-white tracking-tight">{userName}</h3>
-              <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider">{userRole}</p>
-            </div>
+          {/* Analytics Dashboard Matrix */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <div className="p-2 flex flex-col">
-              <button onClick={() => alert("Settings management initialized...")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-secondary text-[20px]">manage_accounts</span>
-                Manage Settings
-              </button>
-              <button onClick={() => alert("Privacy settings are managed by your administrator.")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface border-b border-surface-container-high transition-colors">
-                <span className="material-symbols-outlined text-secondary text-[20px]">security</span>
-                Security & Privacy
-              </button>
-              <button onClick={() => { if(typeof window !== "undefined") { localStorage.removeItem("cognisolve_username"); localStorage.removeItem("cognisolve_role"); window.location.href = "/"; } }} className="flex items-center gap-3 px-4 py-3 mt-1 hover:bg-error/10 rounded-xl text-left text-sm font-bold text-error transition-colors">
-                <span className="material-symbols-outlined text-[20px]">logout</span>
-                Sign Out Securely
-              </button>
+            {/* Resolution Trends */}
+            <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/15 p-6 flex flex-col h-[400px]">
+              <h3 className="font-headline font-bold text-lg text-on-surface mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">trending_up</span>
+                    Volume vs Resolution Trend
+                </div>
+                <span className="text-secondary text-xs uppercase font-label">Past 7 Days</span>
+              </h3>
+              <div className="flex-1 flex items-end gap-2 px-2 overflow-hidden relative">
+                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_19%,rgba(0,0,0,0.03)_20%,transparent_21%)] bg-[length:100%_20%] pointer-events-none"></div>
+                {[65, 80, 50, 95, 75, 45, 90].map((v, i) => (
+                  <div key={i} className="flex-1 flex flex-col justify-end items-center group relative h-full group">
+                    <div className="absolute -top-8 bg-surface-container shadow-md px-2 py-1 rounded text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity z-10">{v} Cases</div>
+                    <div className="w-[60%] bg-gradient-to-t from-primary/80 to-primary/40 rounded-t-md transition-all duration-500 ease-in-out group-hover:bg-primary" style={{ height: `${v}%` }}></div>
+                    <div className="mt-3 text-xs font-bold text-secondary font-mono">{["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i]}</div>
+                  </div>
+                ))}
+              </div>
             </div>
+
+            {/* SLA Compliance Gauge */}
+            <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/15 p-6 flex flex-col h-[400px]">
+              <h3 className="font-headline font-bold text-lg text-on-surface mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#006d3a]">verified_user</span>
+                SLA Compliance Rate
+              </h3>
+              <div className="flex-1 flex items-center justify-center relative">
+                <div className="relative w-48 h-48 flex justify-center items-center">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" className="text-surface-container-highest" strokeWidth="12" />
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" className="text-[#006d3a]" strokeWidth="12" strokeDasharray="251" strokeDashoffset="30" strokeLinecap="round" />
+                    </svg>
+                    <div className="absolute flex flex-col items-center">
+                        <span className="text-4xl font-headline font-extrabold text-[#006d3a]">88%</span>
+                        <span className="text-[10px] uppercase tracking-widest text-secondary font-bold">In-SLA</span>
+                    </div>
+                </div>
+              </div>
+              <div className="flex justify-between items-center bg-surface-container-low p-4 rounded-lg mt-4">
+                  <div className="flex flex-col items-center">
+                      <span className="text-xs text-secondary font-bold uppercase">Total Cases</span>
+                      <span className="text-xl font-bold">{total}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                      <span className="text-xs text-secondary font-bold uppercase">Breached</span>
+                      <span className="text-xl font-bold text-error">12</span>
+                  </div>
+              </div>
+            </div>
+
+            {/* AI Classification Confidence Heatmap */}
+            <div className="bg-surface-container-lowest lg:col-span-2 rounded-xl shadow-sm border border-outline-variant/15 p-6">
+               <h3 className="font-headline font-bold text-lg text-on-surface mb-6 flex items-center gap-2">
+                <span className="material-symbols-outlined text-indigo-600">psychology</span>
+                AI Classification Confidence
+              </h3>
+              <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                      <div className="w-24 text-sm font-bold text-secondary uppercase">Product</div>
+                      <div className="flex-1 bg-surface-container h-4 rounded-full overflow-hidden flex">
+                          <div className="bg-[#006d3a] h-full" style={{width: '75%'}}></div>
+                          <div className="bg-[#f59e0b] h-full" style={{width: '15%'}}></div>
+                          <div className="bg-error h-full" style={{width: '10%'}}></div>
+                      </div>
+                      <div className="w-12 text-right text-xs font-bold">92% Acc</div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                      <div className="w-24 text-sm font-bold text-secondary uppercase">Packaging</div>
+                      <div className="flex-1 bg-surface-container h-4 rounded-full overflow-hidden flex">
+                          <div className="bg-[#006d3a] h-full" style={{width: '60%'}}></div>
+                          <div className="bg-[#f59e0b] h-full" style={{width: '30%'}}></div>
+                          <div className="bg-error h-full" style={{width: '10%'}}></div>
+                      </div>
+                      <div className="w-12 text-right text-xs font-bold">85% Acc</div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                      <div className="w-24 text-sm font-bold text-secondary uppercase">Trade</div>
+                      <div className="flex-1 bg-surface-container h-4 rounded-full overflow-hidden flex">
+                          <div className="bg-[#006d3a] h-full" style={{width: '90%'}}></div>
+                          <div className="bg-[#f59e0b] h-full" style={{width: '5%'}}></div>
+                          <div className="bg-error h-full" style={{width: '5%'}}></div>
+                      </div>
+                      <div className="w-12 text-right text-xs font-bold">95% Acc</div>
+                  </div>
+                  <div className="flex gap-4 items-center justify-center pt-4 text-xs font-bold uppercase text-secondary">
+                      <span className="flex items-center gap-1"><div className="w-3 h-3 bg-[#006d3a] rounded-sm"></div> High Confidence (&gt;80%)</span>
+                      <span className="flex items-center gap-1"><div className="w-3 h-3 bg-[#f59e0b] rounded-sm"></div> Medium Conf (60-80%)</span>
+                      <span className="flex items-center gap-1"><div className="w-3 h-3 bg-error rounded-sm"></div> Low Conf (&lt;60%)</span>
+                  </div>
+              </div>
+            </div>
+
           </div>
         </div>
-      )}
-
       </main>
 
       {/* Detail Slide-Over Panel */}

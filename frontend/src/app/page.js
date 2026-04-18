@@ -5,8 +5,14 @@ import { useRouter } from "next/navigation";
 export default function Login() {
   const router = useRouter();
   const [role, setRole] = useState("Customer Support Executive");
+  const [username, setUsername] = useState("");
 
   const handleSignIn = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cognisolve_username", username || "Jane Doe");
+      localStorage.setItem("cognisolve_role", role);
+    }
+    
     if (role === "Customer Support Executive") {
       router.push("/action-center");
     } else if (role === "QA Team Member") {
@@ -50,7 +56,13 @@ export default function Login() {
             </div>
             <div>
               <label className="block font-label text-xs font-semibold text-on-surface-variant mb-1.5 uppercase tracking-wider">Username</label>
-              <input className="w-full bg-surface border border-outline-variant rounded-md px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="Enter username" type="text" />
+              <input 
+                className="w-full bg-surface border border-outline-variant rounded-md px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" 
+                placeholder="Enter username" 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
             </div>
             <div>
               <div className="flex justify-between items-center mb-1.5">

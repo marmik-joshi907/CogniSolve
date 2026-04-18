@@ -1,69 +1,41 @@
 import os
 import re
 
-files = [
-    ('src/app/action-center/page.js', 'Customer Support Executive', 'Executive View'),
-    ('src/app/qa/page.js', 'QA Team Member', 'Quality Assurance'),
-    ('src/app/operations/page.js', 'Operations Manager', 'Operations')
+app_dir = r"c:\Users\Asus\Desktop\Cognisolve\frontend\src\app"
+
+pages = [
+    "action-center/page.js",
+    "complaint-log/page.js",
+    "operations/page.js",
+    "qa/page.js"
 ]
 
-ROLES = {
-    'Executive View': 'Customer Support Executive',
-    'Quality Assurance': 'QA Team Member',
-    'Operations': 'Operations Manager',
-}
-
-def patch_file(filepath, current_role, current_page_name):
-    with open(filepath, 'r', encoding='utf-8') as f:
+def patch_file(filepath):
+    fullpath = os.path.join(app_dir, filepath)
+    if not os.path.exists(fullpath):
+        return
+    with open(fullpath, 'r', encoding='utf-8') as f:
         content = f.read()
-
-    if '"use client"' not in content:
-        content = '"use client";\n' + content
         
-    handler = """  const handleNav = (e, pageName) => {
-    e.preventDefault();
-    const roleMapping = {
-      'Executive View': 'Customer Support Executive',
-      'Quality Assurance': 'QA Team Member',
-      'Operations': 'Operations Manager'
-    };
-    const requiredRole = roleMapping[pageName] || 'authorized personnel';
-    alert(`Access Restricted: Please login as ${requiredRole} to access this portal.`);
-  };
-"""
-    # Insert handler after `export default function ComponentName() {`
-    content = re.sub(r'(export default function [^()]+\(\) {\n)', r'\1' + handler, content)
-
-    # Now replace the <a> tags
-    # <a className="... " href="#">
-    #     <span ...>icon</span>
-    #     Page Name
-    # </a>
+    # Replace handleNav calls with actual links
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Executive View[\'"]\)\}', 'href="/action-center"', content)
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Quality Assurance[\'"]\)\}', 'href="/qa"', content)
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Operations[\'"]\)\}', 'href="/operations"', content)
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Analytics[\'"]\)\}', 'href="/operations"', content)
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Complaint Log[\'"]\)\}', 'href="/complaint-log"', content)
     
-    def a_replacer(match):
-        a_start = match.group(1)
-        a_content = match.group(2)
-        end_tag = match.group(3)
-        
-        # Extract page name
-        # Usually format is: \n<span ...>icon</span>\n                Page Name\n            
-        name_match = re.search(r'</span>\s+([A-Za-z ]+)\s+', a_content)
-        if name_match:
-            page_name = name_match.group(1).strip()
-            if page_name != current_page_name:
-                # Add onClick
-                a_start = a_start.replace('href="#"', f'href="#" onClick={{(e) => handleNav(e, "{page_name}")}}')
-            else:
-                # If it's the current page, don't alert, just prevent default or leave href="#"
-                a_start = a_start.replace('href="#"', 'href="#" onClick={(e) => e.preventDefault()}')
-        
-        return a_start + a_content + end_tag
-        
-    content = re.sub(r'(<a [^>]*href="#"[^>]*>)(.*?)(</a>)', a_replacer, content, flags=re.DOTALL)
+    # Help Center and Account
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Help Center[\'"]\)\}', 'href="#" onClick={(e) => { e.preventDefault(); alert("Redirecting to CogniSolve Help Center...\\n\\nFor immediate assistance, call 1-800-COGNISOLVE."); }}', content)
+    
+    content = re.sub(r'href="#"\s+onClick=\{\(e\) => handleNav\(e, [\'"]Account[\'"]\)\}', 'href="#" onClick={(e) => { e.preventDefault(); alert("Account Settings\\n\\nUser: Jane Doe\\nRole: Admin / Operations Manager\\nStatus: Active"); }}', content)
+    
+    # QA page special cases:
+    content = re.sub(r'onClick=\{\(e\) => handleNav\(e, [\'"]Executive View[\'"]\)\}', 'onClick={(e) => { e.preventDefault(); window.location.href="/action-center"; }}', content)
 
-    with open(filepath, 'w', encoding='utf-8') as f:
+    with open(fullpath, 'w', encoding='utf-8') as f:
         f.write(content)
-    print(f"Patched {filepath}")
 
-for f, r, p in files:
-    patch_file(f, r, p)
+for p in pages:
+    patch_file(p)
+
+print("Sidebar patched globally.")
