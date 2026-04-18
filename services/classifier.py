@@ -267,6 +267,46 @@ def classify_complaint(complaint_text, channel='web'):
             keyword_feats = extract_keyword_features(complaint_text)
             urgency_score = float(keyword_feats[2])
             
+            # ── Hybrid category validation ──
+            # When keyword features strongly indicate a single category but ML disagrees,
+            # trust the keyword signal. This catches vocabulary-overlap edge cases.
+            product_kw = int(keyword_feats[3])
+            packaging_kw = int(keyword_feats[4])
+            trade_kw = int(keyword_feats[5])
+            kw_scores = {"Product": product_kw, "Packaging": packaging_kw, "Trade": trade_kw}
+            max_kw_cat = max(kw_scores, key=kw_scores.get)
+            max_kw_score = kw_scores[max_kw_cat]
+            second_highest = sorted(kw_scores.values(), reverse=True)[1]
+            
+            # Override conditions (conservative to avoid false overrides):
+            #   Case A: Strong keyword signal (>=2 matches) with clear dominance
+            #   Case B: Unique keyword signal (>=1 match, other categories have 0 matches)
+            #   Note: ML confidence guard removed for Case B because the small-vocabulary
+            #   model produces degenerate 1.0 confidence values that are unreliable.
+            has_strong_signal = max_kw_score >= 2 and max_kw_score > second_highest
+            has_unique_signal = max_kw_score >= 1 and second_highest == 0
+            
+            if (has_strong_signal or has_unique_signal) and max_kw_cat != category:
+                ml_category = category
+                category = max_kw_cat
+                print(f"[CogniSol] Category override: ML={ml_category} -> Keyword={category} (kw={kw_scores}, ml_conf={cat_confidence:.2f})")
+            
+            # ── Hybrid priority override ──
+            # The ML priority model has low accuracy (~33%) due to uniform dataset distribution.
+            # Use keyword-based urgency as a strong override signal when present.
+            ml_priority = priority  # Preserve original ML prediction
+            high_kw_count = int(keyword_feats[0])
+            med_kw_count = int(keyword_feats[1])
+            
+            if urgency_score >= 0.6 or high_kw_count >= 2:
+                priority = "high"
+            elif urgency_score >= 0.3 or med_kw_count >= 2:
+                priority = "medium"
+            # else: keep ML prediction as-is for low priority
+            
+            if priority != ml_priority:
+                print(f"[CogniSol] Priority override: ML={ml_priority} -> Keyword={priority} (urgency={urgency_score:.2f})")
+            
             method = "ml"
             confidence = round(cat_confidence, 2)
             

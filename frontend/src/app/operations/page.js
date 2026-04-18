@@ -20,6 +20,12 @@ export default function Operations() {
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
 
   useEffect(() => {
     fetchStats();
@@ -59,7 +65,7 @@ export default function Operations() {
       'Operations': 'Operations Manager'
     };
     const requiredRole = roleMapping[pageName] || 'authorized personnel';
-    alert(`Access Restricted: Please login as ${requiredRole} to access this portal.`);
+    showToast(`Access Restricted: Please login as ${requiredRole} to access this portal.`);
   };
 
   const handleExportCSV = async () => {
@@ -154,11 +160,11 @@ export default function Operations() {
       <h3 className="font-headline font-bold text-sm">Quick Settings</h3>
     </div>
     <div className="flex flex-col py-2">
-      <button onClick={() => { setShowSettings(false); alert("User Interface preferences applied!"); }} className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
+      <button onClick={() => { setShowSettings(false); showToast("User Interface preferences applied!"); }} className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
         <span className="material-symbols-outlined text-[18px] text-secondary">tune</span>
         Preferences
       </button>
-      <button onClick={() => { setShowSettings(false); alert("Dark mode toggle coming soon!"); }} className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
+      <button onClick={() => { setShowSettings(false); showToast("Dark mode toggle coming soon!"); }} className="px-4 py-2.5 text-left text-sm hover:bg-surface-container-low transition-colors flex items-center gap-3">
         <span className="material-symbols-outlined text-[18px] text-secondary">palette</span>
         Appearance
       </button>
@@ -706,6 +712,14 @@ export default function Operations() {
         </div>
       )}
 
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom flex items-center gap-2 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg font-['Inter'] text-sm">
+          <span className="material-symbols-outlined text-green-400">info</span>
+          {toastMessage}
+        </div>
+      )}
+
       {/* Account Modal */}
       {showAccount && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -726,11 +740,11 @@ export default function Operations() {
             </div>
             
             <div className="p-2 flex flex-col">
-              <button onClick={() => alert("Settings management initialized...")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface transition-colors">
+              <button onClick={() => showToast("Settings management initialized...")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface transition-colors">
                 <span className="material-symbols-outlined text-secondary text-[20px]">manage_accounts</span>
                 Manage Settings
               </button>
-              <button onClick={() => alert("Privacy settings are managed by your administrator.")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface border-b border-surface-container-high transition-colors">
+              <button onClick={() => showToast("Privacy settings are managed by your administrator.")} className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container rounded-xl text-left text-sm font-medium text-on-surface border-b border-surface-container-high transition-colors">
                 <span className="material-symbols-outlined text-secondary text-[20px]">security</span>
                 Security & Privacy
               </button>

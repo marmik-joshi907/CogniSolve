@@ -139,6 +139,8 @@ def _serialize_complaint(record):
     for key, value in serialized.items():
         if isinstance(value, datetime):
             serialized[key] = value.isoformat()
+        elif isinstance(value, bool):
+            pass  # Keep booleans as-is (don't convert to float)
         elif hasattr(value, "__float__"):
             serialized[key] = float(value)
     return serialized

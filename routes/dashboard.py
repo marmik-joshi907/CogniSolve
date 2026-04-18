@@ -22,6 +22,10 @@ def get_dashboard_stats():
         }
     """
     try:
+        # Auto-detect SLA breaches (throttled to once per 60s)
+        from services.sla_middleware import auto_check_sla_breaches
+        auto_check_sla_breaches()
+        
         # Total complaints
         total = execute_query_one("SELECT COUNT(*) as count FROM complaints")
         total_count = total["count"] if total else 0

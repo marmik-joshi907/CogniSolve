@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS sla_events (
     id              SERIAL PRIMARY KEY,
     complaint_id    INTEGER NOT NULL REFERENCES complaints(id) ON DELETE CASCADE,
     event_type      VARCHAR(30) NOT NULL
-                        CHECK (event_type IN ('created', 'assigned', 'escalated', 'breached', 'resolved', 'closed')),
+                        CHECK (event_type IN ('created', 'assigned', 'escalated', 'breached', 'resolved', 'closed', 'qa_approved')),
     event_data      JSONB DEFAULT '{}',
     created_at      TIMESTAMP DEFAULT NOW()
 );
