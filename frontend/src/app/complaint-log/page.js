@@ -1,6 +1,56 @@
 "use client";
 import { useState, useEffect } from "react";
 
+const SlaTimer = ({ deadline, initialBreached }) => {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [isBreached, setIsBreached] = useState(initialBreached);
+
+  useEffect(() => {
+    if (!deadline) return;
+    const target = new Date(deadline).getTime();
+    
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const diff = target - now;
+      
+      if (diff <= 0 || initialBreached) {
+        setIsBreached(true);
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+      } else {
+        setIsBreached(false);
+        setTimeLeft({
+          hours: Math.floor((diff / (1000 * 60 * 60))),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000),
+        });
+      }
+    };
+    
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [deadline, initialBreached]);
+
+  if (isBreached) {
+    return (
+      <div className="flex items-center gap-1 text-error font-bold text-[10px] bg-error-container/20 px-1.5 py-0.5 rounded uppercase border border-error/20 inline-flex">
+        <span className="material-symbols-outlined text-[12px]">warning</span>
+        BREACHED
+      </div>
+    );
+  }
+
+  const { hours, minutes, seconds } = timeLeft;
+  const isWarning = hours < 2;
+
+  return (
+    <div className={`flex items-center gap-1 font-bold text-[10px] px-1.5 py-0.5 rounded border inline-flex ${isWarning ? 'text-orange-700 bg-orange-50 border-orange-200' : 'text-primary bg-primary/5 border-primary/20'}`}>
+      <span className="material-symbols-outlined text-[12px]">timer</span>
+      {hours}h {minutes}m {seconds}s
+    </div>
+  );
+};
+
 export default function ComplaintLog() {
   const [complaints, setComplaints] = useState([]);
   const [stats, setStats] = useState(null);
@@ -583,20 +633,15 @@ export default function ComplaintLog() {
               {/* SLA Info */}
               {selectedComplaint.sla_deadline && (
                 <div className="bg-surface p-4 rounded-lg border border-outline-variant/10">
-                  <h4 className="font-label text-[10px] uppercase tracking-wider text-secondary mb-2">
-                    SLA Deadline
-                  </h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-label text-[10px] uppercase tracking-wider text-secondary">
+                      Target SLA Deadline
+                    </h4>
+                    <SlaTimer deadline={selectedComplaint.sla_deadline} initialBreached={selectedComplaint.sla_breached} />
+                  </div>
                   <p className="text-sm text-on-surface font-medium">
-                    {new Date(selectedComplaint.sla_deadline).toLocaleString()}
+                    DL: {new Date(selectedComplaint.sla_deadline).toLocaleString()}
                   </p>
-                  {selectedComplaint.sla_breached && (
-                    <span className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-error bg-error-container px-2 py-0.5 rounded">
-                      <span className="material-symbols-outlined text-[14px]">
-                        warning
-                      </span>
-                      SLA BREACHED
-                    </span>
-                  )}
                 </div>
               )}
 
