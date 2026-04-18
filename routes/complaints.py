@@ -1,6 +1,7 @@
 """
 CogniSol - Complaint Routes
 API endpoints for complaint submission, listing, and status updates.
+Uses real ML classifier + Ollama resolution engine.
 """
 
 from flask import Blueprint, request, jsonify
@@ -11,7 +12,8 @@ from models.complaint import (
     update_complaint_status,
 )
 from models.sla import create_sla_event
-from services.mock_classifier import classify_complaint
+from services.classifier import classify_complaint
+from services.resolution_engine import generate_resolution
 
 complaints_bp = Blueprint("complaints", __name__)
 
@@ -23,7 +25,7 @@ VALID_STATUSES = {"open", "in_progress", "resolved", "closed"}
 @complaints_bp.route("/api/complaints/submit", methods=["POST"])
 def submit_complaint():
     """
-    Submit a new complaint for classification.
+    Submit a new complaint for classification and resolution.
     
     Request Body:
         {
@@ -32,7 +34,7 @@ def submit_complaint():
         }
     
     Returns:
-        201: Created complaint with mock classification results
+        201: Created complaint with ML classification + resolution recommendation
         400: Validation error
         500: Server error
     """
@@ -54,10 +56,17 @@ def submit_complaint():
                 "error": f"Field 'channel' must be one of: {', '.join(VALID_CHANNELS)}"
             }), 400
 
-        # Classify complaint (mock for Phase 1)
-        classification = classify_complaint(text)
+        # ── Layer 4: Classify complaint (ML or rule-based) ──
+        classification = classify_complaint(text, channel)
 
-        # Store in database
+        # ── Layer 5: Generate resolution recommendation (Ollama or template) ──
+        resolution = generate_resolution(
+            complaint_text=text,
+            category=classification["category"],
+            priority=classification["priority"],
+        )
+
+        # ── Layer 6: Store in database ──
         complaint = create_complaint(
             complaint_text=text,
             channel=channel,
@@ -65,6 +74,7 @@ def submit_complaint():
             priority=classification["priority"],
             confidence_score=classification["confidence"],
             sla_deadline=classification["sla_deadline"],
+            resolution_text=resolution["resolution_text"],
         )
 
         # Record SLA creation event
@@ -75,6 +85,9 @@ def submit_complaint():
                 "category": classification["category"],
                 "priority": classification["priority"],
                 "confidence": classification["confidence"],
+                "urgency_score": classification.get("urgency_score", 0),
+                "classification_method": classification.get("classification_method", "unknown"),
+                "resolution_method": resolution.get("method", "unknown"),
                 "sla_hours": {
                     "high": 4, "medium": 12, "low": 24
                 }[classification["priority"]],
@@ -85,6 +98,13 @@ def submit_complaint():
             "success": True,
             "message": "Complaint submitted and classified successfully",
             "data": complaint,
+            "classification": {
+                "method": classification.get("classification_method", "unknown"),
+                "urgency_score": classification.get("urgency_score", 0),
+            },
+            "resolution": {
+                "method": resolution.get("method", "unknown"),
+            },
         }), 201
 
     except Exception as e:
@@ -124,6 +144,22 @@ def list_complaints():
             "data": complaints,
         }), 200
 
+    except Exception as e:
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@complaints_bp.route("/api/complaints/<int:complaint_id>", methods=["GET"])
+def get_complaint(complaint_id):
+    """Get a single complaint by ID."""
+    try:
+        complaint = get_complaint_by_id(complaint_id)
+        if not complaint:
+            return jsonify({"error": f"Complaint {complaint_id} not found"}), 404
+        
+        return jsonify({
+            "success": True,
+            "data": complaint,
+        }), 200
     except Exception as e:
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 

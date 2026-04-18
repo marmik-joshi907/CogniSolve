@@ -16,7 +16,8 @@ INSERT INTO classification_labels (label_name, description)
 VALUES
     ('Product',   'Complaints related to product quality, defects, or effectiveness'),
     ('Packaging', 'Complaints related to packaging damage, labeling, or presentation'),
-    ('Trade',     'Complaints related to trade practices, pricing, or distribution')
+    ('Trade',     'Complaints related to trade practices, pricing, or distribution'),
+    ('Other',     'Complaints that do not fit into the above categories')
 ON CONFLICT (label_name) DO NOTHING;
 
 -- Agents table (CSE, QA, Ops users)

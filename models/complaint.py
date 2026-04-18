@@ -8,7 +8,7 @@ from datetime import datetime
 from db.connection import execute_query, execute_query_one
 
 
-def create_complaint(complaint_text, channel, category, priority, confidence_score, sla_deadline):
+def create_complaint(complaint_text, channel, category, priority, confidence_score, sla_deadline, resolution_text=None):
     """
     Insert a new complaint into the database.
     
@@ -17,15 +17,15 @@ def create_complaint(complaint_text, channel, category, priority, confidence_sco
     """
     query = """
         INSERT INTO complaints 
-            (complaint_text, channel, category, priority, confidence_score, sla_deadline)
+            (complaint_text, channel, category, priority, confidence_score, sla_deadline, resolution_text)
         VALUES 
-            (%s, %s, %s, %s, %s, %s)
+            (%s, %s, %s, %s, %s, %s, %s)
         RETURNING 
             id, complaint_text, channel, status, category, priority,
             confidence_score, resolution_text, sla_deadline, sla_breached,
             assigned_agent_id, created_at, updated_at
     """
-    params = (complaint_text, channel, category, priority, confidence_score, sla_deadline)
+    params = (complaint_text, channel, category, priority, confidence_score, sla_deadline, resolution_text)
     result = execute_query_one(query, params)
     return _serialize_complaint(result)
 

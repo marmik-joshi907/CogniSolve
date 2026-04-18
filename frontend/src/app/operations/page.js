@@ -1,5 +1,40 @@
 "use client";
+import { useState, useEffect } from "react";
+
 export default function Operations() {
+  const [stats, setStats] = useState(null);
+  const [complaints, setComplaints] = useState([]);
+
+  useEffect(() => {
+    fetchStats();
+    fetchComplaints();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/dashboard/stats");
+      const json = await res.json();
+      if (json.success) setStats(json.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchComplaints = async () => {
+    try {
+      const res = await fetch("/api/complaints");
+      const json = await res.json();
+      if (json.success) setComplaints(json.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const total = stats?.total_complaints || 0;
+  const breached = stats?.sla_breached || 0;
+  const slaMetPercent = total === 0 ? 100 : (((total - breached) / total) * 100).toFixed(1);
+  const highPriority = stats?.by_priority?.high || 0;
+
   const handleNav = (e, pageName) => {
     e.preventDefault();
     const roleMapping = {
@@ -9,6 +44,40 @@ export default function Operations() {
     };
     const requiredRole = roleMapping[pageName] || 'authorized personnel';
     alert(`Access Restricted: Please login as ${requiredRole} to access this portal.`);
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const res = await fetch('/api/export/csv');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cognisolve_complaints_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('CSV export failed:', e);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const res = await fetch('/api/export/pdf');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cognisolve_report_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('PDF export failed:', e);
+    }
   };
   return (
     <div className="flex h-screen w-full bg-surface">
@@ -129,11 +198,11 @@ export default function Operations() {
 </div>
 {/*  Export Actions  */}
 <div className="flex gap-2 ml-auto md:ml-4">
-<button className="bg-surface-container-lowest text-primary hover:bg-surface-container-low px-4 py-2 rounded-DEFAULT font-label text-sm font-semibold shadow-[0_4px_12px_rgba(25,28,30,0.03)] transition-all flex items-center gap-2 border border-transparent hover:border-surface-variant">
+<button onClick={handleExportPDF} className="bg-surface-container-lowest text-primary hover:bg-surface-container-low px-4 py-2 rounded-DEFAULT font-label text-sm font-semibold shadow-[0_4px_12px_rgba(25,28,30,0.03)] transition-all flex items-center gap-2 border border-transparent hover:border-surface-variant">
 <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
                         Export PDF
                     </button>
-<button className="bg-surface-container-highest text-on-surface hover:bg-surface-variant px-4 py-2 rounded-DEFAULT font-label text-sm font-semibold transition-all flex items-center gap-2">
+<button onClick={handleExportCSV} className="bg-surface-container-highest text-on-surface hover:bg-surface-variant px-4 py-2 rounded-DEFAULT font-label text-sm font-semibold transition-all flex items-center gap-2">
 <span className="material-symbols-outlined text-[18px]">table_chart</span>
                         Export CSV
                     </button>
@@ -147,14 +216,14 @@ export default function Operations() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="font-label text-xs uppercase tracking-widest text-secondary mb-2">SLA Met %</p>
 <div className="flex items-end gap-3">
-<h3 className="font-headline text-4xl font-extrabold text-primary tracking-tighter">94.2%</h3>
+<h3 className="font-headline text-4xl font-extrabold text-primary tracking-tighter">{slaMetPercent}%</h3>
 <div className="flex items-center text-sm font-medium text-[#006d3a] mb-1 bg-[#e6f4ea] px-1.5 py-0.5 rounded-DEFAULT">
 <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                        +1.2%
+                        Active
                     </div>
 </div>
 <div className="mt-4 w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
-<div className="h-full bg-gradient-to-r from-primary to-primary-container w-[94.2%]"></div>
+<div className="h-full bg-gradient-to-r from-primary to-primary-container" style={{ width: `${slaMetPercent}%` }}></div>
 </div>
 </div>
 {/*  KPI 2  */}
@@ -162,7 +231,7 @@ export default function Operations() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-error/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="font-label text-xs uppercase tracking-widest text-secondary mb-2">Breached Count</p>
 <div className="flex items-end gap-3">
-<h3 className="font-headline text-4xl font-extrabold text-on-surface tracking-tighter">18</h3>
+<h3 className="font-headline text-4xl font-extrabold text-on-surface tracking-tighter">{breached}</h3>
 <div className="flex items-center text-sm font-medium text-error mb-1 bg-error-container px-1.5 py-0.5 rounded-DEFAULT">
 <span className="material-symbols-outlined text-[14px]">trending_up</span>
                         +3
@@ -175,19 +244,19 @@ export default function Operations() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-secondary-container/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="font-label text-xs uppercase tracking-widest text-secondary mb-2">Avg Resolution Time</p>
 <div className="flex items-end gap-3">
-<h3 className="font-headline text-4xl font-extrabold text-on-surface tracking-tighter">4.2<span className="text-xl text-secondary font-medium ml-1">hrs</span></h3>
+<h3 className="font-headline text-4xl font-extrabold text-on-surface tracking-tighter">{stats?.avg_resolution_hours || '—'}<span className="text-xl text-secondary font-medium ml-1">hrs</span></h3>
 <div className="flex items-center text-sm font-medium text-[#006d3a] mb-1 bg-[#e6f4ea] px-1.5 py-0.5 rounded-DEFAULT">
 <span className="material-symbols-outlined text-[14px]">trending_down</span>
-                        -0.5h
+                        Live
                     </div>
 </div>
 <p className="font-body text-xs text-secondary mt-3">Across all tiers</p>
 </div>
 {/*  KPI 4  */}
 <div className="bg-surface-container-lowest p-6 rounded-lg relative overflow-hidden bg-gradient-to-br from-surface-container-lowest to-surface-container-high/30">
-<p className="font-label text-xs uppercase tracking-widest text-secondary mb-2">Open High Priority</p>
+<p className="font-label text-xs uppercase tracking-widest text-secondary mb-2">Total High Priority</p>
 <div className="flex justify-between items-start">
-<h3 className="font-headline text-4xl font-extrabold text-primary tracking-tighter">7</h3>
+<h3 className="font-headline text-4xl font-extrabold text-primary tracking-tighter">{highPriority}</h3>
 <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center animate-pulse">
 <span className="material-symbols-outlined text-on-error-container">warning</span>
 </div>
@@ -210,21 +279,40 @@ export default function Operations() {
 </button>
 </div>
 <div className="flex-1 flex flex-col items-center justify-center relative min-h-[240px]">
-{/*  Placeholder Donut using CSS  */}
-<div className="w-48 h-48 rounded-full border-[16px] border-surface-container-low relative flex items-center justify-center">
-{/*  Simulated segments using conic-gradient on a pseudo element or inner div  */}
-<div className="absolute inset-[-16px] rounded-full" style={{background: 'conic-gradient(#142175 0% 45%, #2e3a8c 45% 70%, #b7c8e1 70% 90%, #e0e3e5 90% 100%)', mask: 'radial-gradient(transparent 55%, black 56%)', WebkitMask: 'radial-gradient(transparent 55%, black 56%)'}}></div>
-<div className="text-center z-10 bg-surface-container-lowest w-32 h-32 rounded-full flex flex-col items-center justify-center shadow-inner">
-<span className="font-headline text-3xl font-extrabold text-primary">342</span>
-<span className="font-label text-[10px] uppercase tracking-wider text-secondary mt-1">Total Active</span>
-</div>
-</div>
+{(() => {
+  const cats = stats?.by_category || {};
+  const catEntries = Object.entries(cats);
+  const catColors = ['#142175', '#2e3a8c', '#b7c8e1', '#e0e3e5', '#6366f1'];
+  let cumulative = 0;
+  const segments = catEntries.map(([, count], i) => {
+    const pct = total === 0 ? 0 : (count / total) * 100;
+    const start = cumulative;
+    cumulative += pct;
+    return `${catColors[i % catColors.length]} ${start}% ${cumulative}%`;
+  });
+  const gradient = segments.length > 0 ? `conic-gradient(${segments.join(', ')})` : 'conic-gradient(#e0e3e5 0% 100%)';
+  return (
+    <div className="w-48 h-48 rounded-full border-[16px] border-surface-container-low relative flex items-center justify-center">
+    <div className="absolute inset-[-16px] rounded-full" style={{background: gradient, mask: 'radial-gradient(transparent 55%, black 56%)', WebkitMask: 'radial-gradient(transparent 55%, black 56%)'}}></div>
+    <div className="text-center z-10 bg-surface-container-lowest w-32 h-32 rounded-full flex flex-col items-center justify-center shadow-inner">
+    <span className="font-headline text-3xl font-extrabold text-primary">{total}</span>
+    <span className="font-label text-[10px] uppercase tracking-wider text-secondary mt-1">Total Active</span>
+    </div>
+    </div>
+  );
+})()}
 </div>
 <div className="mt-4 grid grid-cols-2 gap-2 text-sm font-body">
-<div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#142175]"></div> Billing (45%)</div>
-<div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#2e3a8c]"></div> Technical (25%)</div>
-<div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#b7c8e1]"></div> Service (20%)</div>
-<div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#e0e3e5]"></div> Other (10%)</div>
+{(() => {
+  const cats = stats?.by_category || {};
+  const catEntries = Object.entries(cats);
+  const catColors = ['#142175', '#2e3a8c', '#b7c8e1', '#e0e3e5', '#6366f1'];
+  return catEntries.map(([cat, count], i) => {
+    const pct = total === 0 ? 0 : Math.round((count / total) * 100);
+    return (<div key={cat} className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: catColors[i % catColors.length]}}></div> {cat} ({pct}%)</div>);
+  });
+})()}
+{Object.keys(stats?.by_category || {}).length === 0 && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#e0e3e5]"></div> No data yet</div>}
 </div>
 </div>
 {/*  Bar Chart Card  */}
@@ -319,113 +407,62 @@ export default function Operations() {
 </tr>
 </thead>
 <tbody className="font-body text-sm divide-y divide-surface-container-high/30">
-{/*  Row: Breached (Red)  */}
-<tr className="hover:bg-surface-container-low/50 transition-colors bg-error-container/5">
-<td className="px-6 py-4 font-mono font-medium text-primary">CGN-8492</td>
-<td className="px-6 py-4">
-<div className="font-semibold text-on-surface">Acme Corp</div>
-<div className="text-xs text-secondary mt-0.5">Enterprise Tier</div>
-</td>
-<td className="px-6 py-4 text-secondary">Billing Discrepancy</td>
-<td className="px-6 py-4">
-<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-error-container text-on-error-container text-xs font-bold uppercase tracking-wider">
-<span className="material-symbols-outlined text-[14px]">warning</span>
-                                    Breached (-2h)
-                                </span>
-</td>
-<td className="px-6 py-4 text-on-surface flex items-center gap-2">
-<img alt="Agent" className="w-6 h-6 rounded-full object-cover" data-alt="close up headshot of a professional man looking serious" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQq_UMcYhe-WzUijdrtGkfETxy_nysINblHQLqba2JRjLZIUc2YCGDUzGBlzMQzXH9xnzewN8RHXmuhYLDrMool-GZ8qZqrTUL2gWKMf_K2XlMFIYnouSvTJ2UIWXn45HRMOeKDrzlw03HpOUuB9towY1dflVW1qjPmK5gWQ7UAAsYiMtxAuOTgdbWNpmHFAeDzoCoqND3bzozZ3LQLfKvog3k1Mc5Ynk5PT3poC0MC2z03uDQ8YJ4Uisex_tlUeCdm5wprRk6daQW"/>
-                                 J. Doe
-                            </td>
-<td className="px-6 py-4 text-right">
-<button className="text-primary hover:bg-primary/5 p-1.5 rounded-DEFAULT transition-colors" title="View Details">
-<span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-</button>
-</td>
-</tr>
-{/*  Row: Warning (Amber)  */}
-<tr className="hover:bg-surface-container-low/50 transition-colors bg-tertiary-fixed/10">
-<td className="px-6 py-4 font-mono font-medium text-primary">CGN-8495</td>
-<td className="px-6 py-4">
-<div className="font-semibold text-on-surface">TechLogistics Inc.</div>
-<div className="text-xs text-secondary mt-0.5">Standard Tier</div>
-</td>
-<td className="px-6 py-4 text-secondary">Data Synchronization</td>
-<td className="px-6 py-4">
-<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-tertiary-fixed text-on-tertiary-fixed-variant text-xs font-bold uppercase tracking-wider">
-<span className="material-symbols-outlined text-[14px]">schedule</span>
-                                    At Risk (&lt; 1h)
-                                </span>
-</td>
-<td className="px-6 py-4 text-on-surface flex items-center gap-2">
-<img alt="Agent" className="w-6 h-6 rounded-full object-cover" data-alt="close up headshot of a professional woman with glasses" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC-hWK4xWfAVH-xtAm1AA-TfvxTAz0mhgMiK2EuIqjgxxLWfAGlbhCoVk--3ShU2BiseLsncexQxdHoEJc6PsTwB-eCyETs7qPFZU4bBHM6KpNxiIbR64d4aXcDYcG7MtfFFakUxB0Bov_hMXuNlGmk1GxcvVnLinN69GtJrUZngpdkOPuqFpJZOhiTzTV11CIWot0DB0Pfhe-gX6-6pwfSdTije8mn92L31uYL1EDqrCMBIdf0-Zbqj2_JeUbWcEC6pyjK-XzJlhv"/>
-                                A. Smith
-                            </td>
-<td className="px-6 py-4 text-right">
-<button className="text-primary hover:bg-primary/5 p-1.5 rounded-DEFAULT transition-colors">
-<span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-</button>
-</td>
-</tr>
-{/*  Row: On Track (Green)  */}
-<tr className="hover:bg-surface-container-low/50 transition-colors">
-<td className="px-6 py-4 font-mono font-medium text-primary">CGN-8501</td>
-<td className="px-6 py-4">
-<div className="font-semibold text-on-surface">Global Retailers</div>
-<div className="text-xs text-secondary mt-0.5">Enterprise Tier</div>
-</td>
-<td className="px-6 py-4 text-secondary">Service Interruption</td>
-<td className="px-6 py-4">
-<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-[#e6f4ea] text-[#006d3a] text-xs font-bold uppercase tracking-wider">
-<span className="material-symbols-outlined text-[14px]">check_circle</span>
-                                    On Track (4h left)
-                                </span>
-</td>
-<td className="px-6 py-4 text-secondary flex items-center gap-2 italic text-xs">
-<span className="material-symbols-outlined text-[16px]">pending</span>
-                                Unassigned
-                            </td>
-<td className="px-6 py-4 text-right">
-<button className="text-primary hover:bg-primary/5 p-1.5 rounded-DEFAULT transition-colors">
-<span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-</button>
-</td>
-</tr>
-{/*  Row: On Track (Green)  */}
-<tr className="hover:bg-surface-container-low/50 transition-colors">
-<td className="px-6 py-4 font-mono font-medium text-primary">CGN-8502</td>
-<td className="px-6 py-4">
-<div className="font-semibold text-on-surface">Nexus Health</div>
-<div className="text-xs text-secondary mt-0.5">Premium Tier</div>
-</td>
-<td className="px-6 py-4 text-secondary">Account Access</td>
-<td className="px-6 py-4">
-<span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-[#e6f4ea] text-[#006d3a] text-xs font-bold uppercase tracking-wider">
-<span className="material-symbols-outlined text-[14px]">check_circle</span>
-                                    On Track (12h left)
-                                </span>
-</td>
-<td className="px-6 py-4 text-on-surface flex items-center gap-2">
-<div className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center text-[10px] font-bold">ML</div>
-                                M. Lee
-                            </td>
-<td className="px-6 py-4 text-right">
-<button className="text-primary hover:bg-primary/5 p-1.5 rounded-DEFAULT transition-colors">
-<span className="material-symbols-outlined text-[20px]">arrow_forward</span>
-</button>
-</td>
-</tr>
+{complaints.length === 0 ? (
+  <tr>
+    <td colSpan="6" className="px-6 py-8 text-center text-secondary">No active cases found.</td>
+  </tr>
+) : (
+  complaints.map(comp => {
+    const isBreached = comp.sla_breached;
+    const isHigh = comp.priority === 'high';
+    const isResolved = comp.status === 'resolved' || comp.status === 'closed';
+    
+    return (
+      <tr key={comp.id} className={`hover:bg-surface-container-low/50 transition-colors ${isBreached ? 'bg-error-container/5' : isHigh ? 'bg-tertiary-fixed/10' : ''}`}>
+      <td className="px-6 py-4 font-mono font-medium text-primary">CGN-{comp.id}</td>
+      <td className="px-6 py-4">
+      <div className="font-semibold text-on-surface truncate max-w-[150px]" title={comp.complaint_text}>{comp.complaint_text}</div>
+      <div className="text-xs text-secondary mt-0.5 capitalize">{comp.channel}</div>
+      </td>
+      <td className="px-6 py-4 text-secondary capitalize">{comp.category}</td>
+      <td className="px-6 py-4">
+        {isResolved ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-[#e6f4ea] text-[#006d3a] text-xs font-bold uppercase tracking-wider">
+            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+            Resolved
+          </span>
+        ) : isBreached ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-error-container text-on-error-container text-xs font-bold uppercase tracking-wider">
+            <span className="material-symbols-outlined text-[14px]">warning</span>
+            Breached
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-DEFAULT bg-tertiary-fixed text-on-tertiary-fixed-variant text-xs font-bold uppercase tracking-wider">
+            <span className="material-symbols-outlined text-[14px]">schedule</span>
+            Active
+          </span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-on-surface flex items-center gap-2">
+      <div className="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center text-[10px] font-bold">Un</div>
+          Unassigned
+      </td>
+      <td className="px-6 py-4 text-right">
+      <button className="text-primary hover:bg-primary/5 p-1.5 rounded-DEFAULT transition-colors" title="View Details">
+      <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
+      </button>
+      </td>
+      </tr>
+    );
+  })
+)}
 </tbody>
 </table>
 </div>
 <div className="p-4 border-t border-surface-container-high/50 bg-surface/30 flex justify-between items-center text-xs text-secondary font-label">
-<span>Showing 1-4 of 124 active cases</span>
+<span>Showing {complaints.length} active cases</span>
 <div className="flex gap-1">
-<button className="px-2 py-1 hover:bg-surface-container-low rounded-DEFAULT disabled:opacity-50" disabled="">Prev</button>
 <button className="px-2 py-1 bg-primary text-white rounded-DEFAULT">1</button>
-<button className="px-2 py-1 hover:bg-surface-container-low rounded-DEFAULT">2</button>
-<button className="px-2 py-1 hover:bg-surface-container-low rounded-DEFAULT">3</button>
-<button className="px-2 py-1 hover:bg-surface-container-low rounded-DEFAULT">Next</button>
 </div>
 </div>
 </section>

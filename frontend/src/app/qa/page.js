@@ -1,5 +1,40 @@
 "use client";
+import { useState, useEffect } from "react";
+
 export default function QA() {
+  const [stats, setStats] = useState(null);
+  const [complaints, setComplaints] = useState([]);
+
+  useEffect(() => {
+    fetchStats();
+    fetchComplaints();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/dashboard/stats");
+      const json = await res.json();
+      if (json.success) setStats(json.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchComplaints = async () => {
+    try {
+      const res = await fetch("/api/complaints");
+      const json = await res.json();
+      if (json.success) setComplaints(json.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const total = stats?.total_complaints || 0;
+  const reviewQueue = complaints.filter(c => c.confidence_score < 0.7);
+  const categories = stats?.by_category || {};
+  const avgConfidence = stats?.avg_confidence || 0;
+
   const handleNav = (e, pageName) => {
     e.preventDefault();
     const roleMapping = {
@@ -9,6 +44,34 @@ export default function QA() {
     };
     const requiredRole = roleMapping[pageName] || 'authorized personnel';
     alert(`Access Restricted: Please login as ${requiredRole} to access this portal.`);
+  };
+
+  const handleAccept = async (id) => {
+    try {
+      await fetch(`/api/complaints/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in_progress' })
+      });
+      fetchComplaints();
+      fetchStats();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await fetch(`/api/complaints/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'closed' })
+      });
+      fetchComplaints();
+      fetchStats();
+    } catch (e) {
+      console.error(e);
+    }
   };
   return (
     <div className="flex h-screen w-full bg-surface">
@@ -99,9 +162,9 @@ export default function QA() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-primary-container/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="text-label-sm uppercase tracking-[0.05em] text-secondary font-bold mb-2">Total Complaints</p>
 <div className="flex items-end gap-3">
-<h2 className="font-headline text-display-sm font-bold text-on-surface">1,248</h2>
+<h2 className="font-headline text-display-sm font-bold text-on-surface">{total}</h2>
 <span className="text-sm text-on-secondary-container mb-1 flex items-center bg-secondary-container/50 px-1.5 py-0.5 rounded">
-<span className="material-symbols-outlined text-[16px]">arrow_upward</span> 12%
+<span className="material-symbols-outlined text-[16px]">arrow_upward</span> Active
                         </span>
 </div>
 <p className="text-xs text-on-surface-variant mt-3 opacity-70">vs last 30 days</p>
@@ -111,13 +174,13 @@ export default function QA() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-primary/5 to-primary-container/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="text-label-sm uppercase tracking-[0.05em] text-secondary font-bold mb-2">Classification Accuracy</p>
 <div className="flex items-end gap-3">
-<h2 className="font-headline text-display-sm font-bold text-on-surface">94.2%</h2>
+<h2 className="font-headline text-display-sm font-bold text-on-surface">{avgConfidence > 0 ? (avgConfidence * 100).toFixed(1) : '—'}%</h2>
 <span className="text-sm text-on-surface-variant mb-1 flex items-center">
                             Target: 95%
                         </span>
 </div>
 <div className="w-full bg-surface-container-high h-1.5 mt-4 rounded-full overflow-hidden">
-<div className="bg-primary h-full w-[94.2%]"></div>
+<div className="bg-primary h-full transition-all" style={{ width: `${avgConfidence * 100}%` }}></div>
 </div>
 </div>
 {/*  Card 3  */}
@@ -125,7 +188,7 @@ export default function QA() {
 <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-error/5 to-error-container/20 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 <p className="text-label-sm uppercase tracking-[0.05em] text-secondary font-bold mb-2">Flagged for Review</p>
 <div className="flex items-end gap-3">
-<h2 className="font-headline text-display-sm font-bold text-error">42</h2>
+<h2 className="font-headline text-display-sm font-bold text-error">{reviewQueue.length}</h2>
 <span className="text-sm text-error mb-1 flex items-center bg-error-container/50 px-1.5 py-0.5 rounded">
                             Requires action
                         </span>
@@ -259,43 +322,38 @@ export default function QA() {
 <span className="material-symbols-outlined text-error text-[20px]">warning</span>
                                     Review Queue
                                 </h3>
-<span className="bg-error-container text-on-error-container text-xs font-bold px-2 py-0.5 rounded-md">42 Pending</span>
+<span className="bg-error-container text-on-error-container text-xs font-bold px-2 py-0.5 rounded-md">{reviewQueue.length} Pending</span>
 </div>
 <p className="text-xs text-on-surface-variant mt-1">Low-confidence AI classifications requiring human validation.</p>
 </div>
 <div className="p-4 flex flex-col gap-4 max-h-[400px] overflow-y-auto">
-{/*  Queue Item 1  */}
-<div className="bg-surface p-4 rounded-lg flex flex-col gap-3 relative">
-<div className="flex justify-between items-start">
-<span className="text-[10px] uppercase tracking-widest text-secondary font-bold">CMP-9921</span>
-<span className="text-xs font-medium text-tertiary-fixed-dim bg-tertiary-fixed-dim/10 px-2 py-0.5 rounded">Conf: 45%</span>
-</div>
-<p className="text-sm text-on-surface leading-relaxed">"I tried updating my billing details but it just keeps looping back to the start. Also, I think I was overcharged last month?"</p>
-<div className="flex flex-col gap-1 mt-1">
-<span className="text-xs text-on-surface-variant">AI Suggested: <strong className="text-on-surface">Billing Error</strong></span>
-<span className="text-xs text-on-surface-variant">Alternative: <strong className="text-on-surface">Technical Glitch</strong></span>
-</div>
-<div className="flex gap-2 mt-2 pt-3 border-t border-surface-container-high">
-<button className="flex-1 py-1.5 bg-surface-container-highest text-on-surface text-sm font-medium rounded-md hover:bg-surface-variant transition-colors">Reject</button>
-<button className="flex-1 py-1.5 bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-medium rounded-md hover:opacity-90 transition-opacity">Accept</button>
-</div>
-</div>
-{/*  Queue Item 2  */}
-<div className="bg-surface p-4 rounded-lg flex flex-col gap-3 relative">
-<div className="flex justify-between items-start">
-<span className="text-[10px] uppercase tracking-widest text-secondary font-bold">CMP-9904</span>
-<span className="text-xs font-medium text-tertiary-fixed-dim bg-tertiary-fixed-dim/10 px-2 py-0.5 rounded">Conf: 52%</span>
-</div>
-<p className="text-sm text-on-surface leading-relaxed">"The new UI update is terrible. Where did the export button go? I need it for my weekly reports ASAP."</p>
-<div className="flex flex-col gap-1 mt-1">
-<span className="text-xs text-on-surface-variant">AI Suggested: <strong className="text-on-surface">Feature Request</strong></span>
-<span className="text-xs text-on-surface-variant">Alternative: <strong className="text-on-surface">UX Feedback</strong></span>
-</div>
-<div className="flex gap-2 mt-2 pt-3 border-t border-surface-container-high">
-<button className="flex-1 py-1.5 bg-surface-container-highest text-on-surface text-sm font-medium rounded-md hover:bg-surface-variant transition-colors">Reject</button>
-<button className="flex-1 py-1.5 bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-medium rounded-md hover:opacity-90 transition-opacity">Accept</button>
-</div>
-</div>
+{reviewQueue.length === 0 ? (
+  <div className="text-center text-sm text-secondary p-4">No reviews required.</div>
+) : (
+  reviewQueue.map(comp => (
+    <div key={comp.id} className="bg-surface p-4 rounded-lg flex flex-col gap-3 relative">
+    <div className="flex justify-between items-start">
+    <span className="text-[10px] uppercase tracking-widest text-secondary font-bold">CMP-{comp.id}</span>
+    <span className="text-xs font-medium text-tertiary-fixed-dim bg-tertiary-fixed-dim/10 px-2 py-0.5 rounded">Conf: {(comp.confidence_score * 100).toFixed(0)}%</span>
+    </div>
+    <p className="text-sm text-on-surface leading-relaxed">"{comp.complaint_text}"</p>
+    <div className="flex flex-col gap-1 mt-1">
+    <span className="text-xs text-on-surface-variant">AI Suggested: <strong className="text-on-surface">{comp.category}</strong></span>
+    <span className="text-xs text-on-surface-variant">Priority: <strong className="text-on-surface">{comp.priority}</strong></span>
+    </div>
+    {comp.resolution_text && (
+      <div className="mt-2 p-2 bg-[#006d3a]/5 rounded border border-[#006d3a]/10">
+        <p className="text-[10px] uppercase tracking-wider text-[#006d3a] font-bold mb-1">AI Resolution</p>
+        <p className="text-xs text-on-surface-variant leading-relaxed whitespace-pre-line">{comp.resolution_text}</p>
+      </div>
+    )}
+    <div className="flex gap-2 mt-2 pt-3 border-t border-surface-container-high">
+    <button onClick={() => handleReject(comp.id)} className="flex-1 py-1.5 bg-surface-container-highest text-on-surface text-sm font-medium rounded-md hover:bg-surface-variant transition-colors">Reject</button>
+    <button onClick={() => handleAccept(comp.id)} className="flex-1 py-1.5 bg-gradient-to-br from-primary to-primary-container text-on-primary text-sm font-medium rounded-md hover:opacity-90 transition-opacity">Accept</button>
+    </div>
+    </div>
+  ))
+)}
 </div>
 <button className="w-full py-3 text-sm text-primary font-medium hover:bg-surface-container-low transition-colors border-t border-surface-container-high">
                             View All Pending
@@ -305,51 +363,26 @@ export default function QA() {
 <div className="bg-surface-container-lowest p-6 rounded-xl">
 <h3 className="font-headline text-headline-sm font-bold text-on-surface mb-6">Category Distribution</h3>
 <div className="flex flex-col gap-5">
-<div className="flex flex-col gap-1">
-<div className="flex justify-between text-sm">
-<span className="font-medium text-on-surface">Technical Performance</span>
-<span className="text-secondary">42%</span>
-</div>
-<div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-<div className="bg-primary h-full w-[42%] rounded-full"></div>
-</div>
-</div>
-<div className="flex flex-col gap-1">
-<div className="flex justify-between text-sm">
-<span className="font-medium text-on-surface">Billing &amp; Subscriptions</span>
-<span className="text-secondary">28%</span>
-</div>
-<div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-<div className="bg-primary/80 h-full w-[28%] rounded-full"></div>
-</div>
-</div>
-<div className="flex flex-col gap-1">
-<div className="flex justify-between text-sm">
-<span className="font-medium text-on-surface">Feature Requests</span>
-<span className="text-secondary">15%</span>
-</div>
-<div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-<div className="bg-primary/60 h-full w-[15%] rounded-full"></div>
-</div>
-</div>
-<div className="flex flex-col gap-1">
-<div className="flex justify-between text-sm">
-<span className="font-medium text-on-surface">Account Access</span>
-<span className="text-secondary">10%</span>
-</div>
-<div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-<div className="bg-primary/40 h-full w-[10%] rounded-full"></div>
-</div>
-</div>
-<div className="flex flex-col gap-1">
-<div className="flex justify-between text-sm">
-<span className="font-medium text-on-surface">Other</span>
-<span className="text-secondary">5%</span>
-</div>
-<div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
-<div className="bg-primary/20 h-full w-[5%] rounded-full"></div>
-</div>
-</div>
+{Object.entries(categories).map(([cat, count], idx) => {
+  const percent = total === 0 ? 0 : Math.round((count / total) * 100);
+  const colors = ["bg-primary", "bg-primary/80", "bg-primary/60", "bg-primary/40", "bg-primary/20"];
+  const color = colors[idx % colors.length];
+  
+  return (
+    <div key={cat} className="flex flex-col gap-1">
+    <div className="flex justify-between text-sm">
+    <span className="font-medium text-on-surface capitalize">{cat}</span>
+    <span className="text-secondary">{percent}%</span>
+    </div>
+    <div className="w-full bg-surface-container-high h-2 rounded-full overflow-hidden">
+    <div className={`${color} h-full rounded-full transition-all`} style={{ width: `${percent}%` }}></div>
+    </div>
+    </div>
+  );
+})}
+{Object.keys(categories).length === 0 && (
+  <div className="text-sm text-secondary">No category data yet.</div>
+)}
 </div>
 </div>
 </div>
